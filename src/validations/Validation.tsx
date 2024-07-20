@@ -22,6 +22,7 @@ export const validate = (user: Register) => {
   } else if (!/\S+@\S+\.\S+/.test(user.email)) {
     errors.email = "Email is invalid";
   }
+  
 
   if (!user.number) {
     errors.number = "Phone Number is required";
@@ -33,9 +34,17 @@ export const validate = (user: Register) => {
     errors.cpassword = "Password is required";
   }
 
-  if (!user.dob) {
-    errors.dob = "Date of Birth is required";
+  if (!user.date.dateB) {
+    errors.dateB = "Date of Birth is required";
   }
+  
+  
+  if (!user.date.attachemnet) {
+    errors.dobfile = "File is required";
+  }
+  
+  
+  
 
   if (!user.file) {
     errors.file = "File is required";

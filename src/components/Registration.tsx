@@ -1,20 +1,25 @@
-import { Button, Container, Form, Row, Col } from "react-bootstrap";
+import { Button, Container, Form, Row, Col, Alert } from "react-bootstrap";
 import "../styles/registration.css";
 import { Register } from "../model/Register";
 import React, { useState } from "react";
 import { validate } from "../validations/Validation";
 
 const Registration: React.FC = () => {
-  const [user, setUser] = useState<Register>({
+  const initialUserState: Register = {
     firstName: "",
     lastName: "",
     number: "",
     email: "",
-    dob: "",
+    date: {dateB:"",attachemnet:null},
     file: null,
     cpassword: "",
-  });
+  };
+
+  const [user, setUser] = useState<Register>(initialUserState);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isSubmitted, setIsSubmitted] = useState(false); // New state for submission status
+  const [fileKey, setFileKey] = useState(Date.now()); // State for file input key
+
 
   const onhandleChange = (
     e: React.ChangeEvent<
@@ -22,233 +27,198 @@ const Registration: React.FC = () => {
     >
   ) => {
     const { name, value } = e.target;
-    setUser({
-      ...user,
-      [name]: value,
-    });
+    let newUser = { ...user };
 
-    const newErrors = { ...errors };
-    const validationResult = validate({ ...user, [name]: value });
-    if (!validationResult[name]) {
-      delete newErrors[name];
+    if (name === "dateB" || name === "attachemnet") {
+      newUser = {
+        ...newUser,
+        date: {
+          ...newUser.date,
+          [name]: value,
+        
+        },
+      };
     } else {
-      newErrors[name] = validationResult[name];
+      newUser = {
+        ...newUser,
+        [name]: value,
+      };
     }
-    setErrors(newErrors);
+
+    setUser(newUser);
+    const validationResult = validate(newUser);
+    setErrors(validationResult);
 
   };
-  const onFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files ? e.target.files[0] : null;
-    setUser({
-      ...user,
-      file,
-    });
-    const newErrors = { ...errors };
-    const validationResult = validate({ ...user, file });
-    if (!validationResult.file) {
-      delete newErrors.file;
-    } else {
-      newErrors.file = validationResult.file;
-    }
-    setErrors(newErrors);
+    const newUser = { ...user, file };
+    setUser(newUser)
+    const validationResult = validate(newUser);
+    setErrors(validationResult);
 
   };
-
 
   const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    const newErrors = validate(user);
-    if (Object.keys(newErrors).length === 0) {
-      console.log(user);
-    } else {
-      setErrors(newErrors);
+    const validationResult = validate(user);
+    setErrors(validationResult);
 
+    if (Object.keys(validationResult).length === 0) {
+      console.log(user);
+      setIsSubmitted(true); // Set submission status to true
+      setUser(initialUserState); // Clear the form fields
+      setErrors({}); // Clear the errors
+      setFileKey(Date.now())
+    } else {
+      setIsSubmitted(false); // Set submission status to false if there are errors
     }
   };
+
   return (
     <>
-      <Container
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
+      <Container className="container">
         <Row>
           <Col md={12}>
-            <div
-              className="login-card"
-              style={{
-                maxWidth: "500px",
-                width: "100vw",
-                padding: "40px",
-                boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-                borderRadius: "15px",
-                backgroundColor: "#fff",
-              }}
-            >
-              <h3 style={{ textAlign: "center", marginBottom: "30px" }}>
-                Registration
-              </h3>
+            <div className="login-card">
+              <h3 className="title">Registration</h3>
               <Form onSubmit={handleSubmit}>
-                <Form.Group
-                  controlId="formBasicfirstName"
-                  style={{ marginBottom: "20px" }}
-                >
+                {isSubmitted && (
+                  <Alert variant="success" onClose={() => setIsSubmitted(false)} dismissible>
+                    Registration successful!
+                  </Alert>
+                )}
+                <Form.Group controlId="formBasicfirstName" className="mb-4">
                   <Form.Control
                     name="firstName"
                     type="text"
                     placeholder="firstName"
-                    style={{ borderRadius: "50px", padding: "15px" }}
-                    // required
                     value={user.firstName}
+                    className="input"
                     onChange={onhandleChange}
                     isInvalid={!!errors.firstName}
-                    
                   />
-                  {
-                    errors.firstName && (
-                        <Form.Control.Feedback type="invalid" >
-                            {errors.firstName}
-                        </Form.Control.Feedback>
-                    )
-                  }
+                  {errors.firstName && (
+                    <Form.Control.Feedback type="invalid">
+                      {errors.firstName}
+                    </Form.Control.Feedback>
+                  )}
                 </Form.Group>
-                <Form.Group
-                  controlId="formBasiclastName"
-                  style={{ marginBottom: "20px" }}
-                >
+                <Form.Group controlId="formBasiclastName" style={{ marginBottom: "20px" }}>
                   <Form.Control
                     name="lastName"
                     type="text"
                     placeholder="lastName"
-                    style={{ borderRadius: "50px", padding: "15px" }}
-                    // required
+                    className="input"
                     value={user.lastName}
                     onChange={onhandleChange}
                     isInvalid={!!errors.lastName}
                   />
-                {
-                    errors.lastName && (
-                        <Form.Control.Feedback type="invalid" >
-                            {errors.lastName}
-                        </Form.Control.Feedback>
-                    )
-                  }
+                  {errors.lastName && (
+                    <Form.Control.Feedback type="invalid">
+                      {errors.lastName}
+                    </Form.Control.Feedback>
+                  )}
                 </Form.Group>
-                <Form.Group
-                  controlId="formBasicphoneNumber"
-                  style={{ marginBottom: "20px" }}
-                >
+                <Form.Group controlId="formBasicphoneNumber" className="mb-4">
                   <Form.Control
                     name="number"
                     type="number"
                     placeholder="PhoneNumber"
-                    style={{ borderRadius: "50px", padding: "15px" }}
-                    // required
+                    className="input"
                     onChange={onhandleChange}
                     value={user.number}
                     isInvalid={!!errors.number}
                   />
-                {
-                    errors.number && (
-                        <Form.Control.Feedback type="invalid" >
-                            {errors.number}
-                        </Form.Control.Feedback>
-                    )
-                  }
+                  {errors.number && (
+                    <Form.Control.Feedback type="invalid">
+                      {errors.number}
+                    </Form.Control.Feedback>
+                  )}
                 </Form.Group>
-                <Form.Group
-                  controlId="formBasicEmail"
-                  style={{ marginBottom: "20px" }}
-                >
+                <Form.Group controlId="formBasicEmail" className="mb-4">
                   <Form.Control
                     name="email"
                     type="email"
                     placeholder="Email"
-                    style={{ borderRadius: "50px", padding: "15px" }}
-                    // required
+                    className="input"
                     onChange={onhandleChange}
                     value={user.email}
                     isInvalid={!!errors.email}
                   />
-                {
-                    errors.email && (
-                        <Form.Control.Feedback type="invalid" >
-                            {errors.email}
-                        </Form.Control.Feedback>
-                    )
-                  }
+                  {errors.email && (
+                    <Form.Control.Feedback type="invalid">
+                      {errors.email}
+                    </Form.Control.Feedback>
+                  )}
                 </Form.Group>
-                <Form.Group
-                  controlId="formBasicDob"
-                  style={{ marginBottom: "20px" }}
-                >
+                <Form.Group controlId="formBasicDob" className="mb-4">
                   <Form.Control
                     type="date"
-                    name="dob"
-                    placeholder="select your dov"
-                    style={{ borderRadius: "50px", padding: "15px" }}
-                    // required
+                    name="dateB"
+                    placeholder="select your dob"
+                    className="input"
                     onChange={onhandleChange}
-                    value={user.dob}
-                    isInvalid={!!errors.dob}
+                    value={user.date.dateB}
+                    isInvalid={!!errors.dateB}
                   />
-                {
-                    errors.dob && (
-                        <Form.Control.Feedback type="invalid" >
-                            {errors.dob}
-                        </Form.Control.Feedback>
-                    )
-                  }
+                  {errors.dateB && (
+                    <Form.Control.Feedback type="invalid">
+                      {errors.dateB}
+                    </Form.Control.Feedback>
+                  )}
                 </Form.Group>
 
-                <Form.Group
-                  controlId="formBasicFile"
-                  style={{ marginBottom: "20px" }}
-                >
+                 <Form.Group controlId="formBasicDobAttach" className="mb-4">
+                  <Form.Label>Birth Certificate</Form.Label>
                   <Form.Control
+                  key={fileKey}
+                    name="attachemnet"
+                    type="file"
+                    placeholder="File"
+                    className="input"
+                    onChange={onhandleChange}
+                    isInvalid={!!errors.dobfile}
+                  />
+                  {errors.dobfile && (
+                    <Form.Control.Feedback type="invalid">
+                      {errors.dobfile}
+                    </Form.Control.Feedback>
+                  )}
+                </Form.Group>
+
+                <Form.Group controlId="formBasicFile" className="mb-4">
+                  <Form.Control
+                  key={fileKey}
                     name="file"
                     type="file"
                     placeholder="File"
-                    style={{ borderRadius: "50px", padding: "15px" }}
-                    // required
+                    className="input"
                     onChange={onFileChange}
                     isInvalid={!!errors.file}
                   />
-                {
-                    errors.file && (    
-                        <Form.Control.Feedback type="invalid" >
-                            {errors.file}
-                        </Form.Control.Feedback>
-                    )
-                  }
+                  {errors.file && (
+                    <Form.Control.Feedback type="invalid">
+                      {errors.file}
+                    </Form.Control.Feedback>
+                  )}
                 </Form.Group>
-
-                <Form.Group
-                  controlId="formBasicCurrentPassword"
-                  style={{ position: "relative", marginBottom: "30px" }}
-                >
+                <Form.Group controlId="formBasicCurrentPassword" className="mb-4">
                   <Form.Control
                     name="cpassword"
                     type="password"
                     placeholder="Enter your password"
-                    style={{ borderRadius: "50px", padding: "15px" }}
-                    // required
+                    className="input"
                     value={user.cpassword}
                     onChange={onhandleChange}
                     isInvalid={!!errors.cpassword}
                   />
-                {
-                    errors.cpassword && (
-                        <Form.Control.Feedback type="invalid"  >
-                            {errors.cpassword}
-                        </Form.Control.Feedback>
-                    )
-                  }
+                  {errors.cpassword && (
+                    <Form.Control.Feedback type="invalid">
+                      {errors.cpassword}
+                    </Form.Control.Feedback>
+                  )}
                 </Form.Group>
                 <Button
                   variant="danger"
